@@ -1,4 +1,7 @@
 {
-  "submissionPassword": "somepassword",
-  "hnapi": "https://hacker-news.firebaseio.com/v0/item/"
+  "MONGODB": {
+    "URL": "<YourMongoDBURL>",
+    "USERNAME": "<YourUseName>",
+    "PASSWORD": "<YourPassword>"
+  }
 }

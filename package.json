@@ -1,14 +1,15 @@
 {
-  "name": "hnwisdom",
+  "name": "slackchangelog",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "3.18.6",
-    "jade": "*",
-    "nedb": "^1.1.1",
-    "request": "^2.54.0"
+    "express": "3.18.6"
+  },
+  "devDependencies": {
+    "mongodb": "^2.0.49",
+    "q": "^1.4.1"
   }
 }

@@ -7,7 +7,6 @@ var express = require('express');
 var routes = require('./routes');
 var http = require('http');
 var path = require('path');
-var Datastore = require('nedb');
 
 var app = express();
 
@@ -27,9 +26,7 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-app.get('/', routes.index);
-app.post('/submissions', routes.postSubmissions)
-app.delete('/submissions/:hnid', routes.deleteSubmissions)
+app.get('/', routes.getChangelog);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
