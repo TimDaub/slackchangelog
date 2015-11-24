@@ -9,5 +9,8 @@ try {
 
 
 exports.qOpenConnection = function() {
-  return Q.nfbind(MongoClient.connect)('mongodb://' + CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD +'@' +CONFIG.MONGODB.URL);
+  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD 
+    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD +'@'
+    : '';
+  return Q.nfbind(MongoClient.connect)('mongodb://' + auth + CONFIG.MONGODB.URL);
 }

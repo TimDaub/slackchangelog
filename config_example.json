@@ -3,5 +3,8 @@
     "URL": "<YourMongoDBURL>",
     "USERNAME": "<YourUseName>",
     "PASSWORD": "<YourPassword>"
+  },
+  "SLACK": {
+    "TOKEN": "<YourSlackTeamToken>"
   }
 }

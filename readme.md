@@ -6,6 +6,10 @@ A tiny express.js/mongodb application that integrates with slack's [slash-comman
 ```
 npm i -g mocha
 mocha
+
+// if mocha gives timeouts because your mongodb is to slow,
+// increase timeout threshold for it by setting
+mocha --timeout 5000
 ```
 
 ## Run it

@@ -42,7 +42,8 @@ describe('API', function() {
     })
     .then(function(res) {
       res.should.have.property('response_type', 'ephemeral');
-      res.should.have.property('text', 'Command not available');
+      res.should.have.property('text');
+      res.text.should.containEql('Command not available!');
       done();
     }, function(err) {
       throw err;
@@ -62,9 +63,30 @@ describe('API', function() {
     })
     .then(function(res) {
       res.should.have.property('response_type', 'ephemeral');
-      res.should.have.property('text', 'Change added to changelog');
+      res.should.have.property('text');
+      res.text.should.containEql('Change added to changelog!');
       done();
     }, function(err) {
+      throw err;
+    });
+  });
+
+  it('should return a changelog about the last 7 days', function(done) {
+    var body = _alterBody({
+      text: ''
+    });
+
+    rp({
+      method: 'POST',
+      uri: API_SERVER,
+      body: body,
+      json: true
+    })
+    .then(function(res) {
+      console.log(res);
+      done();
+    })
+    .catch(function(err) {
       throw err;
     });
   });
