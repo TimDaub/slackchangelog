@@ -13,34 +13,34 @@ var COLLECTION = 'changelog';
 
 var _respondWithText = function(req, res, text, type) {
   var userName = req.body.user_name
+  var input = '@' + userName + ': ' + req.body.command + ' ' + req.body.text + '\r\n';
   type = type || 'ephemeral';
 
   res.json(200, {
     response_type: type,
-    text: text
+    text: input + text
   });
 };
 
-var _getChangelog = function(req, res) {
+var _getChangelog = function(req, res, start, end) {
   MongoDB.qOpenConnection()
     .then(function aOpenConnection(db) {
       var col = db.collection(COLLECTION);
-      var today = new Date();
-      var lastWeek = new Date(new Date().setDate(today.getDate() - 7));
 
       col
-        .find({ date_created: { $gte: lastWeek, $lt: today } })
+        .find({ date_created: { $gte: start, $lt: end } })
         .sort({ date_created: 1 })
         .toArray(function(err, items) {
+          console.log(items);
           var date;
-          var texts = items.map(function(change) {
+          var texts = items.reduce(function(text, change) {
             var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
-            var text = dateChanged ? utils.formatDate(change.date_created) + ':\r\n' : '';
+            text += dateChanged ? '\r\n\t\t' + utils.formatDate(change.date_created) + ':\r\n' : '';
             date = dateChanged ? change.date_created : date;
-            text += '\t\t @' + change.user_name + ': ' + change.text + '\r\n'
+            text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' +  change.user_name + ': ' + change.text + '\r\n'
             return text;
-          });
-          _respondWithText(req, res, texts.join('') || 'Couldn\'t find a changelog :crying_cat_face:');
+          }, '');
+          _respondWithText(req, res, texts || ':crying_cat_face:: "Couldn\'t find a changelog."');
         });
     })
     .catch(function aErrorFindChangelog(err) {
@@ -57,15 +57,21 @@ var _addChangelog = function(req, res) {
 
       var date_created = new Date(words[1]);
       var isDateValid = !isNaN(date_created.getTime())
-      req.body.text = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
+      var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
 
-      if(!req.body.text) throw new Error('Sorry, your message was invalid.');
-      if(req.body.text.length > 80) throw new Error('Sorry, your message cannot be longer than 80 characters. \r\n This is what you wrote: "' + req.body.text + '"');
+      if(!changeText) throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
+      if(changeText.length > 80) throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
 
-      return col.insertOne(_.extend(req.body, { date_created: isDateValid ? date_created : new Date() }))
+      var body = _.extend(_.extend({}, req.body), {
+        date_created: isDateValid ? date_created : new Date(),
+        text: changeText,
+      });
+      return col.insertOne(_.extend(body, {
+        hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest("hex")
+      }))
     })
     .then(function aAddChangelog(dbRes) {
-      _respondWithText(req, res, 'Change added to changelog!');
+      _respondWithText(req, res, ':kissing_cat:: "Hello human, I have added your change to the list!"');
     })
     .catch(function aErrorAddChangelog(err) {
       console.error(err);
@@ -73,13 +79,28 @@ var _addChangelog = function(req, res) {
     });
 };
 
+var _rmChangelog = function(req, res) {
+  var words = req.body.text.split(' ');
+  MongoDB.qOpenConnection()
+    .then(function aOpenConnection(db) {
+      var col = db.collection(COLLECTION);
 
-var _editChangelog = function(req, res) {
-  res.send(418, 'Not yet implemented');
-};
+      var hash = words[1];
+      if(hash.length !== 6) throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.')
 
-var _removeChangelog = function(req, res) {
-  res.send(418, 'Not yet implemented');
+      return col.deleteOne({ hash: { $regex: hash.slice(-6) } });
+    })
+    .then(function aRmChangelog(dbRes) {
+      if(dbRes.deletedCount === 1) {
+        _respondWithText(req, res, ':scream_cat:: "The changelog? Where is it? I need to find it!" (It was deleted)');
+      } else {
+        throw new Error(':crying_cat_face:: Oh, no! We have deleted something else! Please contact tim@ascribe.io');
+      }
+    })
+    .catch(function aErrorRmChangelog(err) {
+      console.error(err);
+      _respondWithText(req, res, err.message);
+    });
 };
 
 exports.routeCommands = function(req, res) {
@@ -91,21 +112,21 @@ exports.routeCommands = function(req, res) {
 
   if(command === '/changelog') {
     if(!text) {
-      _getChangelog(req, res);
+      // generate a changelog of the last week
+      var today = new Date();
+      var lastWeek = new Date(new Date().setDate(today.getDate() - 7));
+      _getChangelog(req, res, lastWeek, today);
     } else {
       var subcommand = text.split(' ')[0];
       switch(subcommand) {
         case 'add':
           _addChangelog(req, res);
           break;
-        case 'edit':
-          _editChangelog(req, res);
-          break;
-        case 'remove':
-          _removeChangelog(req, res);
+        case 'rm':
+          _rmChangelog(req, res);
           break;
         default:
-          _respondWithText(req, res, 'Command not available!');
+          _respondWithText(req, res, ':smirk_cat:: "Sorry human, I cannot let you do that!"');
       }
     }
   } else {
