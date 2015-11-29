@@ -81,6 +81,7 @@ var _addChangelog = function(req, res) {
 
 var _rmChangelog = function(req, res) {
   var words = req.body.text.split(' ');
+  var userName = req.body.user_name;
   MongoDB.qOpenConnection()
     .then(function aOpenConnection(db) {
       var col = db.collection(COLLECTION);
@@ -88,10 +89,18 @@ var _rmChangelog = function(req, res) {
       var hash = words[1];
       if(hash.length !== 6) throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.')
 
-      return col.deleteOne({ hash: { $regex: hash.slice(-6) } });
+      return col
+        .findOne({ hash: { $regex: hash.slice(-6) } })
+        .then(function aRmAndFindChangelog(dbFindRes) {
+          if(dbFindRes.user_name !== userName) {
+            throw new Error(':smirk_cat:: You\'re not the creator, You cannot haz this removed!');
+          } else {
+            return col.deleteOne({ hash: dbFindRes.hash });
+          }
+        });
     })
-    .then(function aRmChangelog(dbRes) {
-      if(dbRes.deletedCount === 1) {
+    .then(function aRmChangelog(dbDelRes) {
+      if(dbDelRes.deletedCount === 1) {
         _respondWithText(req, res, ':scream_cat:: "The changelog? Where is it? I need to find it!" (It was deleted)');
       } else {
         throw new Error(':crying_cat_face:: Oh, no! We have deleted something else! Please contact tim@ascribe.io');
