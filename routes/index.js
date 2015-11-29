@@ -2,6 +2,7 @@ var MongoDB = require('../ctrls/mongo_db');
 var _ = require('lodash');
 var Q = require('q');
 var utils = require('../ctrls/utils');
+var SlackCtrl = require('../ctrls/slack_ctrl');
 
 try {
   var CONFIG = require('../config.json');
@@ -31,7 +32,6 @@ var _getChangelog = function(req, res, start, end) {
         .find({ date_created: { $gte: start, $lt: end } })
         .sort({ date_created: 1 })
         .toArray(function(err, items) {
-          console.log(items);
           var date;
           var texts = items.reduce(function(text, change) {
             var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
@@ -51,6 +51,7 @@ var _getChangelog = function(req, res, start, end) {
 
 var _addChangelog = function(req, res) {
   var words = req.body.text.split(' ');
+  var userName = req.body.user_name;
   MongoDB.qOpenConnection()
     .then(function aOpenConnection(db) {
       var col = db.collection(COLLECTION);
@@ -71,6 +72,9 @@ var _addChangelog = function(req, res) {
       }))
     })
     .then(function aAddChangelog(dbRes) {
+      var savedChange = dbRes.ops[0];
+      var savedChangeText = '@' + savedChange.user_name + ' at ' + utils.formatDate(savedChange.date_created) + ': ' + savedChange.text;
+      SlackCtrl.postToChannel(CONFIG.SLACK.CHANNEL, CONFIG.SLACK.EMOJI, CONFIG.SLACK.BOT_NAME, 'Hello Humans, @' + userName + ' has added the following to the changelog:\r\n\t\t' + savedChangeText + '\r\n _(Type /changelog to see all changes)_');
       _respondWithText(req, res, ':kissing_cat:: "Hello human, I have added your change to the list!"');
     })
     .catch(function aErrorAddChangelog(err) {

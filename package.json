@@ -11,6 +11,7 @@
   "devDependencies": {
     "lodash": "^3.10.1",
     "mongodb": "^2.0.49",
-    "q": "^1.4.1"
+    "q": "^1.4.1",
+    "request-promise": "^1.0.2"
   }
 }

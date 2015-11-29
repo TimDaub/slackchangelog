@@ -7,6 +7,10 @@
   "SLACK": {
     "TOKEN": "<YourSlackTeamToken>",
     "ADMIN": "<TheBotsAdminsSlackUsername>",
-    "RESTRICT_RM_TO_ADMIN": <true|false> 
+    "RESTRICT_RM_TO_ADMIN": <true|false>,
+    "CHANNEL": "<SlackChannelForAnnouncements>",
+    "EMOJI": "<YourFavoriteEmoji>",
+    "WEBHOOK_URL": "<AGeneratedWebhookUrl>",
+    "BOT_NAME": "<YourBotsName>"
   }
 }
