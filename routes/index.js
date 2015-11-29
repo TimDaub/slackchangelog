@@ -82,6 +82,11 @@ var _addChangelog = function(req, res) {
 var _rmChangelog = function(req, res) {
   var words = req.body.text.split(' ');
   var userName = req.body.user_name;
+
+  if(CONFIG.SLACK.RESTRICT_RM_TO_ADMIN && CONFIG.SLACK.ADMIN !== userName) {
+    throw new Error(':smirk_cat:: Human, my master told me to only allow him to delete posts.');
+  }
+
   MongoDB.qOpenConnection()
     .then(function aOpenConnection(db) {
       var col = db.collection(COLLECTION);
@@ -92,7 +97,7 @@ var _rmChangelog = function(req, res) {
       return col
         .findOne({ hash: { $regex: hash.slice(-6) } })
         .then(function aRmAndFindChangelog(dbFindRes) {
-          if(dbFindRes.user_name !== userName) {
+          if(dbFindRes.user_name !== userName && CONFIG.SLACK.ADMIN !== userName) {
             throw new Error(':smirk_cat:: You\'re not the creator, You cannot haz this removed!');
           } else {
             return col.deleteOne({ hash: dbFindRes.hash });

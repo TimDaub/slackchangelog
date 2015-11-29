@@ -5,6 +5,8 @@
     "PASSWORD": "<YourPassword>"
   },
   "SLACK": {
-    "TOKEN": "<YourSlackTeamToken>"
+    "TOKEN": "<YourSlackTeamToken>",
+    "ADMIN": "<TheBotsAdminsSlackUsername>",
+    "RESTRICT_RM_TO_ADMIN": <true|false> 
   }
 }
