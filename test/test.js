@@ -2,17 +2,23 @@ var should = require('should');
 var rp = require('request-promise');
 var utils = require('../ctrls/utils');
 
+try {
+  var CONFIG = require('../config.json');
+} catch(e) {
+  console.log('config.json is not available, therefore I will use an environment variable.');
+}
+
 var API_SERVER = 'http://localhost:3000/'
 var API_BODY_BOILERPLATE = {
-  token: 'gIkuvaNzQIHg97ATvDxqgjtO',
+  token: CONFIG.SLACK.TOKEN,
   team_id: 'T0001',
   team_domain: 'example',
   channel_id: 'C2147483705',
   channel_name: 'test',
   user_id: 'U2147483697',
-  user_name: 'Tim',
+  user_name: 'tim',
   command: '/changelog',
-  text: 94070,
+  text: 'This is some text',
   response_url: 'https://hooks.slack.com/commands/1234/5678'
 }
 
@@ -43,7 +49,7 @@ describe('API', function() {
     .then(function(res) {
       res.should.have.property('response_type', 'ephemeral');
       res.should.have.property('text');
-      res.text.should.containEql('Command not available!');
+      res.text.should.containEql('Sorry human, I cannot let you do that!');
       done();
     }, function(err) {
       throw err;
@@ -64,7 +70,7 @@ describe('API', function() {
     .then(function(res) {
       res.should.have.property('response_type', 'ephemeral');
       res.should.have.property('text');
-      res.text.should.containEql('Change added to changelog!');
+      res.text.should.containEql('Hello human, I have added your change to the list!');
       done();
     }, function(err) {
       throw err;
@@ -83,7 +89,6 @@ describe('API', function() {
       json: true
     })
     .then(function(res) {
-      console.log(res);
       done();
     })
     .catch(function(err) {
