@@ -8,7 +8,10 @@ try {
   console.log('config.json is not available, therefore I will use an environment variable.');
 }
 
-var API_SERVER = 'http://localhost:3000/'
+var API_SERVER = 'http://localhost:3000/';
+var CHANGE_TEXT = 'Implemented tests for slackchangelog';
+var TODAY = new Date();
+var YESTERDAY = new Date(new Date().setDate(TODAY.getDate() - 1));
 var API_BODY_BOILERPLATE = {
   token: CONFIG.SLACK.TOKEN,
   team_id: 'T0001',
@@ -20,7 +23,8 @@ var API_BODY_BOILERPLATE = {
   command: '/changelog',
   text: 'This is some text',
   response_url: 'https://hooks.slack.com/commands/1234/5678'
-}
+};
+
 
 var _alterBody = function(changeSet) {
   var bodyCopy = utils.simpleCopy(API_BODY_BOILERPLATE);
@@ -34,7 +38,6 @@ var _alterBody = function(changeSet) {
 };
 
 describe('API', function() {
-
   it('should respond nicely, when command is not available', function(done) {
     var body = _alterBody({
       text: 'timissocool'
@@ -58,7 +61,7 @@ describe('API', function() {
 
   it('should add an item to the changelog', function (done) {
     var body = _alterBody({
-      text: 'add #ikonotv Implemented link in loan history when loaning under a contract'
+      text: 'add ' + CHANGE_TEXT
     });
 
     rp({
@@ -77,7 +80,28 @@ describe('API', function() {
     });
   });
 
-  it('should return a changelog about the last 7 days', function(done) {
+  it('should add an item to yesterday\'s changelog', function(done) {
+    var yesterdayAsDate = utils.formatDate(YESTERDAY).split(',')[0];
+    var body = _alterBody({
+      text: 'add ' + yesterdayAsDate + ' ' + CHANGE_TEXT
+    });
+
+    rp({
+      method: 'POST',
+      uri: API_SERVER,
+      body: body,
+      json: true
+    })
+    .then(function(res) {
+      console.log(res);
+      done();
+    })
+    .catch(function(err) {
+      throw err;
+    });
+  });
+
+  it('should return a changelog about the last 7 days containing the two previously generated changes', function(done) {
     var body = _alterBody({
       text: ''
     });

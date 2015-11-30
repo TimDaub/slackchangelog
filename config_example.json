@@ -2,7 +2,8 @@
   "MONGODB": {
     "URL": "<YourMongoDBURL>",
     "USERNAME": "<YourUseName>",
-    "PASSWORD": "<YourPassword>"
+    "PASSWORD": "<YourPassword>",
+    "COLLECTION": "<YourDocumentCollection>"
   },
   "SLACK": {
     "TOKEN": "<YourSlackTeamToken>",
