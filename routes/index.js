@@ -2,9 +2,7 @@
 
 
 var MongoDB = require('../ctrls/mongo_db');
-var _ = require('lodash');
-var utils = require('../ctrls/utils');
-var SlackCtrl = require('../ctrls/slack_ctrl');
+
 
 
 try {
@@ -12,8 +10,6 @@ try {
 } catch(e) {
   console.log('config.json is not available, therefore I will use an environment variable.');
 }
-
-var COLLECTION = 'changelog';
 
 var _respondWithText = function(req, res, text, type) {
   var userName = req.body.user_name;
@@ -26,108 +22,43 @@ var _respondWithText = function(req, res, text, type) {
   });
 };
 
-var _getChangelog = function(req, res, start, end) {
-  MongoDB.qOpenConnection()
-    .then(function aOpenConnection(db) {
-      var col = db.collection(COLLECTION);
+var _genericTextResponse = function(req, res) {
+  return function(text) { _respondWithText(req, res, text) };
+};
 
-      col
-        .find({ date_created: { $gte: start, $lt: end } })
-        .sort({ date_created: 1 })
-        .toArray(function(err, items) {
-          var date;
-          var texts = items.reduce(function(text, change) {
-            var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
-            text += dateChanged ? '\r\n\t\t' + utils.formatDate(change.date_created) + ':\r\n' : '';
-            date = dateChanged ? change.date_created : date;
-            text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' + change.user_name + ': ' + change.text + '\r\n';
-            return text;
-          }, '');
-          _respondWithText(req, res, texts || ':crying_cat_face:: "Couldn\'t find a changelog."');
-        });
-    })
-    .catch(function aErrorFindChangelog(err) {
-      console.error(err);
-      _respondWithText(req, res, err.message);
-    });
+var _getChangelog = function(req, res, start, end) {
+  MongoDB
+    .qGetChangelog(start, end)
+    .then(_genericTextResponse(req, res))
+    .catch(_genericTextResponse(req, res));
 };
 
 var _addChangelog = function(req, res) {
   var words = req.body.text.split(' ');
   var userName = req.body.user_name;
-  MongoDB.qOpenConnection()
-    .then(function aOpenConnection(db) {
-      var col = db.collection(COLLECTION);
 
-      var date_created = new Date(words[1]);
-      var isDateValid = !isNaN(date_created.getTime());
-      var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
+  var dateCreated = new Date(words[1]);
+  var isDateValid = !isNaN(dateCreated.getTime())
+  var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
 
-      if(!changeText) {
-        throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
-      }
-      if(changeText.length > 80) {
-        throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
-      }
-
-      var body = _.extend(_.extend({}, req.body), {
-        date_created: isDateValid ? date_created : new Date(),
-        text: changeText
-      });
-      return col.insertOne(_.extend(body, {
-        hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest('hex')
-      }));
-    })
-    .then(function aAddChangelog(dbRes) {
-      var savedChange = dbRes.ops[0];
-      var savedChangeText = '@' + savedChange.user_name + ' at ' + utils.formatDate(savedChange.date_created) + ': ' + savedChange.text;
-      SlackCtrl.postToChannel(CONFIG.SLACK.CHANNEL, CONFIG.SLACK.EMOJI, CONFIG.SLACK.BOT_NAME, 'Hello Humans, @' + userName + ' has added the following to the changelog:\r\n\t\t' + savedChangeText + '\r\n _(Type /changelog to see all changes)_');
-      _respondWithText(req, res, ':kissing_cat:: "Hello human, I have added your change to the list!"');
-    })
-    .catch(function aErrorAddChangelog(err) {
-      console.error(err);
-      _respondWithText(req, res, err.message);
-    });
+  MongoDB
+    .qAddChangelog(userName, isDateValid ? dateCreated : new Date(), changeText, req.body)
+    .then(_genericTextResponse(req, res))
+    .catch(_genericTextResponse(req, res));
 };
 
 var _rmChangelog = function(req, res) {
-  var words = req.body.text.split(' ');
+  var hash = req.body.text.split(' ')[1];
   var userName = req.body.user_name;
 
   if(CONFIG.SLACK.RESTRICT_RM_TO_ADMIN && CONFIG.SLACK.ADMIN !== userName) {
     throw new Error(':smirk_cat:: Human, my master told me to only allow him to delete posts.');
   }
 
-  MongoDB.qOpenConnection()
-    .then(function aOpenConnection(db) {
-      var col = db.collection(COLLECTION);
-
-      var hash = words[1];
-      if(hash.length !== 6) {
-        throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.');
-      }
-
-      return col
-        .findOne({ hash: { $regex: hash.slice(-6) } })
-        .then(function aRmAndFindChangelog(dbFindRes) {
-          if(dbFindRes.user_name !== userName && CONFIG.SLACK.ADMIN !== userName) {
-            throw new Error(':smirk_cat:: You\'re not the creator, You cannot haz this removed!');
-          } else {
-            return col.deleteOne({ hash: dbFindRes.hash });
-          }
-        });
-    })
-    .then(function aRmChangelog(dbDelRes) {
-      if(dbDelRes.deletedCount === 1) {
-        _respondWithText(req, res, ':scream_cat:: "The changelog? Where is it? I need to find it!" (It was deleted)');
-      } else {
-        throw new Error(':crying_cat_face:: Oh, no! We have deleted something else! Please contact tim@ascribe.io');
-      }
-    })
-    .catch(function aErrorRmChangelog(err) {
-      console.error(err);
-      _respondWithText(req, res, err.message);
-    });
+  MongoDB
+    .qRmChangelog(userName, hash)
+    .then(_genericTextResponse(req, res))
+    .catch(_genericTextResponse(req, res));
 };
 
 exports.routeCommands = function(req, res) {
@@ -155,7 +86,7 @@ exports.routeCommands = function(req, res) {
           _rmChangelog(req, res);
           break;
         default:
-          _respondWithText(req, res, ':smirk_cat:: "Sorry human, I cannot let you do that!"');
+          _respondWithText(req, res, ':smirk_cat:: "Sorry human, I cannot let you do that (the command doesn\'t exist)!"');
       }
     }
   } else {

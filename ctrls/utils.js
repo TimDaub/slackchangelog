@@ -1,6 +1,4 @@
-'use strict';
-
-var DAYS = ['Su', 'Mo', 'Tue', 'Wed', 'Thu', 'Fr', 'Sa'];
+var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 exports.simpleCopy = function(obj) {
   return JSON.parse(JSON.stringify(obj));
