@@ -23,7 +23,7 @@ var _respondWithText = function(req, res, text, type) {
 };
 
 var _genericTextResponse = function(req, res) {
-  return function(text) { _respondWithText(req, res, text) };
+  return function(text) { _respondWithText(req, res, text); };
 };
 
 var _getChangelog = function(req, res, start, end) {
@@ -38,7 +38,7 @@ var _addChangelog = function(req, res) {
   var userName = req.body.user_name;
 
   var dateCreated = new Date(words[1]);
-  var isDateValid = !isNaN(dateCreated.getTime())
+  var isDateValid = !isNaN(dateCreated.getTime());
   var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
 
   MongoDB

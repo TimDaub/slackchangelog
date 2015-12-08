@@ -114,7 +114,7 @@ describe('API', function() {
       body: body,
       json: true
     })
-    .then(function(res) {
+    .then(function() {
       done();
     })
     .catch(function(err) {

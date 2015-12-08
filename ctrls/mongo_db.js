@@ -18,11 +18,11 @@ try {
 
 
 var _qOpenConnection = function() {
-  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD 
-    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD +'@'
+  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD
+    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD + '@'
     : '';
   return Q.nfbind(MongoClient.connect)('mongodb://' + auth + CONFIG.MONGODB.URL);
-}
+};
 
 exports.qGetChangelog = function(start, end) {
   return Q.Promise(function(resolve, reject) {
@@ -39,7 +39,7 @@ exports.qGetChangelog = function(start, end) {
               var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
               text += dateChanged ? '\r\n\t\t' + utils.formatDate(change.date_created) + ':\r\n' : '';
               date = dateChanged ? change.date_created : date;
-              text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' +  change.user_name + ': ' + change.text + '\r\n'
+              text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' + change.user_name + ': ' + change.text + '\r\n';
               return text;
             }, '');
             resolve(texts || ':crying_cat_face:: "Couldn\'t find a changelog."');
@@ -50,7 +50,7 @@ exports.qGetChangelog = function(start, end) {
         reject(err.message);
       });
   });
-}
+};
 
 exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
   return Q.Promise(function(resolve, reject) {
@@ -58,17 +58,21 @@ exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
       .then(function aOpenConnection(db) {
         var col = db.collection(CONFIG.MONGODB.COLLECTION);
 
-        if(!changeText) throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
-        if(changeText.length > 80) throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
+        if(!changeText) {
+          throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
+        }
+        if(changeText.length > 80) {
+          throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
+        }
 
         body = _.extend(_.extend({}, body), {
           date_created: dateCreated,
-          text: changeText,
+          text: changeText
         });
 
         return col.insertOne(_.extend(body, {
-          hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest("hex")
-        }))
+          hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest('hex')
+        }));
       })
       .then(function aAddChangelog(dbRes) {
         var savedChange = dbRes.ops[0];
@@ -82,7 +86,7 @@ exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
         reject(err.message);
       });
   });
-}
+};
 
 exports.qRmChangelog = function(userName, hash) {
   return Q.Promise(function(resolve, reject) {
@@ -90,7 +94,9 @@ exports.qRmChangelog = function(userName, hash) {
       .then(function aOpenConnection(db) {
         var col = db.collection(CONFIG.MONGODB.COLLECTION);
 
-        if(hash.length !== 6) throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.')
+        if(hash.length !== 6) {
+          throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.');
+        }
 
         return col
           .findOne({ hash: { $regex: hash.slice(-6) } })
@@ -116,4 +122,4 @@ exports.qRmChangelog = function(userName, hash) {
         reject(err.message);
       });
   });
-}
+};
