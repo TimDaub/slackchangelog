@@ -1,4 +1,8 @@
+'use strict';
+
+
 var rp = require('request-promise');
+
 
 try {
   var CONFIG = require('../config.json');
@@ -11,7 +15,7 @@ exports.postToChannel = function(channel, emoji, botName, message) {
     channel: channel,
     icon_emoji: emoji,
     username: botName,
-    text: message,
+    text: message
   };
 
   return rp({
@@ -19,5 +23,5 @@ exports.postToChannel = function(channel, emoji, botName, message) {
       uri: CONFIG.SLACK.WEBHOOK_URL,
       body: body,
       json: true
-    })
+    });
 };

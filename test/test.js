@@ -1,8 +1,10 @@
-var should = require('should');
+'use strict';
+
+
 var rp = require('request-promise');
 var utils = require('../ctrls/utils');
 
-var API_SERVER = 'http://localhost:3000/'
+var API_SERVER = 'http://localhost:3000/';
 var API_BODY_BOILERPLATE = {
   token: 'gIkuvaNzQIHg97ATvDxqgjtO',
   team_id: 'T0001',
@@ -14,7 +16,7 @@ var API_BODY_BOILERPLATE = {
   command: '/changelog',
   text: 94070,
   response_url: 'https://hooks.slack.com/commands/1234/5678'
-}
+};
 
 var _alterBody = function(changeSet) {
   var bodyCopy = utils.simpleCopy(API_BODY_BOILERPLATE);
@@ -23,7 +25,7 @@ var _alterBody = function(changeSet) {
           .keys(changeSet)
           .reduce(function(defaultBody, changeKey) {
             defaultBody[changeKey] = changeSet[changeKey];
-            return defaultBody
+            return defaultBody;
           }, bodyCopy);
 };
 

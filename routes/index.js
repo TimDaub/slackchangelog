@@ -1,8 +1,11 @@
+'use strict';
+
+
 var MongoDB = require('../ctrls/mongo_db');
 var _ = require('lodash');
-var Q = require('q');
 var utils = require('../ctrls/utils');
 var SlackCtrl = require('../ctrls/slack_ctrl');
+
 
 try {
   var CONFIG = require('../config.json');
@@ -13,7 +16,7 @@ try {
 var COLLECTION = 'changelog';
 
 var _respondWithText = function(req, res, text, type) {
-  var userName = req.body.user_name
+  var userName = req.body.user_name;
   var input = '@' + userName + ': ' + req.body.command + ' ' + req.body.text + '\r\n';
   type = type || 'ephemeral';
 
@@ -37,7 +40,7 @@ var _getChangelog = function(req, res, start, end) {
             var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
             text += dateChanged ? '\r\n\t\t' + utils.formatDate(change.date_created) + ':\r\n' : '';
             date = dateChanged ? change.date_created : date;
-            text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' +  change.user_name + ': ' + change.text + '\r\n'
+            text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' + change.user_name + ': ' + change.text + '\r\n';
             return text;
           }, '');
           _respondWithText(req, res, texts || ':crying_cat_face:: "Couldn\'t find a changelog."');
@@ -46,7 +49,7 @@ var _getChangelog = function(req, res, start, end) {
     .catch(function aErrorFindChangelog(err) {
       console.error(err);
       _respondWithText(req, res, err.message);
-    })
+    });
 };
 
 var _addChangelog = function(req, res) {
@@ -57,19 +60,23 @@ var _addChangelog = function(req, res) {
       var col = db.collection(COLLECTION);
 
       var date_created = new Date(words[1]);
-      var isDateValid = !isNaN(date_created.getTime())
+      var isDateValid = !isNaN(date_created.getTime());
       var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
 
-      if(!changeText) throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
-      if(changeText.length > 80) throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
+      if(!changeText) {
+        throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
+      }
+      if(changeText.length > 80) {
+        throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
+      }
 
       var body = _.extend(_.extend({}, req.body), {
         date_created: isDateValid ? date_created : new Date(),
-        text: changeText,
+        text: changeText
       });
       return col.insertOne(_.extend(body, {
-        hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest("hex")
-      }))
+        hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest('hex')
+      }));
     })
     .then(function aAddChangelog(dbRes) {
       var savedChange = dbRes.ops[0];
@@ -96,7 +103,9 @@ var _rmChangelog = function(req, res) {
       var col = db.collection(COLLECTION);
 
       var hash = words[1];
-      if(hash.length !== 6) throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.')
+      if(hash.length !== 6) {
+        throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.');
+      }
 
       return col
         .findOne({ hash: { $regex: hash.slice(-6) } })
@@ -126,7 +135,9 @@ exports.routeCommands = function(req, res) {
   var command = req.body.command;
   var token = req.body.token;
 
-  if(token !== CONFIG.SLACK.TOKEN) res.send(401, 'Your team is not allowed to make requests to this server.');
+  if(token !== CONFIG.SLACK.TOKEN) {
+    res.send(401, 'Your team is not allowed to make requests to this server.');
+  }
 
   if(command === '/changelog') {
     if(!text) {

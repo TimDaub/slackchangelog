@@ -1,5 +1,9 @@
-var MongoClient = require('mongodb').MongoClient
+'use strict';
+
+
+var MongoClient = require('mongodb').MongoClient;
 var Q = require('q');
+
 
 try {
   var CONFIG = require('../config.json');
@@ -9,8 +13,8 @@ try {
 
 
 exports.qOpenConnection = function() {
-  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD 
-    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD +'@'
+  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD
+    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD + '@'
     : '';
   return Q.nfbind(MongoClient.connect)('mongodb://' + auth + CONFIG.MONGODB.URL);
-}
+};
