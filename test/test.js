@@ -1,4 +1,6 @@
-var should = require('should');
+'use strict';
+
+
 var rp = require('request-promise');
 var utils = require('../ctrls/utils');
 
@@ -33,7 +35,7 @@ var _alterBody = function(changeSet) {
           .keys(changeSet)
           .reduce(function(defaultBody, changeKey) {
             defaultBody[changeKey] = changeSet[changeKey];
-            return defaultBody
+            return defaultBody;
           }, bodyCopy);
 };
 
@@ -112,7 +114,7 @@ describe('API', function() {
       body: body,
       json: true
     })
-    .then(function(res) {
+    .then(function() {
       done();
     })
     .catch(function(err) {
