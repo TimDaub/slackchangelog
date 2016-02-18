@@ -1,4 +1,8 @@
+'use strict';
+
+
 var MongoDB = require('../ctrls/mongo_db');
+
 
 
 try {
@@ -8,7 +12,7 @@ try {
 }
 
 var _respondWithText = function(req, res, text, type) {
-  var userName = req.body.user_name
+  var userName = req.body.user_name;
   var input = '@' + userName + ': ' + req.body.command + ' ' + req.body.text + '\r\n';
   type = type || 'ephemeral';
 
@@ -19,7 +23,7 @@ var _respondWithText = function(req, res, text, type) {
 };
 
 var _genericTextResponse = function(req, res) {
-  return function(text) { _respondWithText(req, res, text) };
+  return function(text) { _respondWithText(req, res, text); };
 };
 
 var _getChangelog = function(req, res, start, end) {
@@ -34,7 +38,7 @@ var _addChangelog = function(req, res) {
   var userName = req.body.user_name;
 
   var dateCreated = new Date(words[1]);
-  var isDateValid = !isNaN(dateCreated.getTime())
+  var isDateValid = !isNaN(dateCreated.getTime());
   var changeText = words.slice(isDateValid ? 2 : 1, words.length).join(' ');
 
   MongoDB
@@ -62,7 +66,9 @@ exports.routeCommands = function(req, res) {
   var command = req.body.command;
   var token = req.body.token;
 
-  if(token !== CONFIG.SLACK.TOKEN) res.send(401, 'Your team is not allowed to make requests to this server.');
+  if(token !== CONFIG.SLACK.TOKEN) {
+    res.send(401, 'Your team is not allowed to make requests to this server.');
+  }
 
   if(command === '/changelog') {
     if(!text) {
