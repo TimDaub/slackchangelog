@@ -1,6 +1,9 @@
 var should = require('should');
 var rp = require('request-promise');
 var utils = require('../ctrls/utils');
+var util = require('util');
+
+var mongodb = require('../ctrls/mongo_db');
 
 try {
   var CONFIG = require('../config.json');
@@ -52,7 +55,7 @@ describe('API', function() {
     .then(function(res) {
       res.should.have.property('response_type', 'ephemeral');
       res.should.have.property('text');
-      res.text.should.containEql('Sorry human, I cannot let you do that!');
+      res.text.should.containEql('Sorry human, I cannot let you do that');
       done();
     }, function(err) {
       throw err;
@@ -86,19 +89,29 @@ describe('API', function() {
       text: 'add ' + yesterdayAsDate + ' ' + CHANGE_TEXT
     });
 
-    rp({
-      method: 'POST',
-      uri: API_SERVER,
-      body: body,
-      json: true
-    })
-    .then(function(res) {
-      console.log(res);
-      done();
-    })
-    .catch(function(err) {
-      throw err;
-    });
+    var today = new Date();
+    var yesterday = new Date(new Date().setDate(today.getDate() - 1));
+    mongodb
+      .qGetChangelog(yesterday, today)
+      .then(function(changelogBefore) {
+        return rp({
+          method: 'POST',
+               uri: API_SERVER,
+               body: body,
+               json: true
+        });
+      })
+      .then(function(res) {
+        console.log(JSON.stringify(res.body));
+        return mongodb.qGetChangelog(yesterday, today);
+      })
+      .then(function(changelogAfter){
+        console.log(JSON.stringify(changelogAfter));
+        done();
+      })
+      .catch(function(err) {
+        throw err;
+      });
   });
 
   it('should return a changelog about the last 7 days containing the two previously generated changes', function(done) {
