@@ -1,15 +1,7 @@
 'use strict';
 
-
 var MongoDB = require('../ctrls/mongo_db');
 
-
-
-try {
-  var CONFIG = require('../config.json');
-} catch(e) {
-  console.log('config.json is not available, therefore I will use an environment variable.');
-}
 
 var _respondWithText = function(req, res, text, type) {
   var userName = req.body.user_name;
@@ -51,7 +43,7 @@ var _rmChangelog = function(req, res) {
   var hash = req.body.text.split(' ')[1];
   var userName = req.body.user_name;
 
-  if(CONFIG.SLACK.RESTRICT_RM_TO_ADMIN && CONFIG.SLACK.ADMIN !== userName) {
+  if(process.env.SLACK_RESTRICT_RM_TO_ADMIN  === 'true' && process.env.SLACK_ADMIN !== userName) {
     throw new Error(':smirk_cat:: Human, my master told me to only allow him to delete posts.');
   }
 
@@ -66,7 +58,7 @@ exports.routeCommands = function(req, res) {
   var command = req.body.command;
   var token = req.body.token;
 
-  if(token !== CONFIG.SLACK.TOKEN) {
+  if(token !== process.env.SLACK_TOKEN) {
     res.send(401, 'Your team is not allowed to make requests to this server.');
   }
 

@@ -9,26 +9,18 @@ var SlackCtrl = require('./slack_ctrl');
 var utils = require('../ctrls/utils');
 
 
-
-try {
-  var CONFIG = require('../config.json');
-} catch(e) {
-  console.error('config.json is not available.');
-}
-
-
 var _qOpenConnection = function() {
-  var auth = CONFIG.MONGODB.USERNAME && CONFIG.MONGODB.PASSWORD
-    ? CONFIG.MONGODB.USERNAME + ':' + CONFIG.MONGODB.PASSWORD + '@'
+  var auth = process.env.MONGODB_USERNAME && process.env.MONGODB_PASSWORD
+    ? process.env.MONGODB_USERNAME + ':' + process.env.MONGODB_PASSWORD + '@'
     : '';
-  return Q.nfbind(MongoClient.connect)('mongodb://' + auth + CONFIG.MONGODB.URL);
+  return Q.nfbind(MongoClient.connect)('mongodb://' + auth + process.env.MONGODB_URL);
 };
 
 exports.qGetChangelog = function(start, end) {
   return Q.Promise(function(resolve, reject) {
     _qOpenConnection()
       .then(function aOpenConnection(db) {
-        var col = db.collection(CONFIG.MONGODB.COLLECTION);
+        var col = db.collection(process.env.MONGODB_COLLECTION);
 
         col
           .find({ date_created: { $gte: start, $lt: end } })
@@ -56,7 +48,7 @@ exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
   return Q.Promise(function(resolve, reject) {
     _qOpenConnection()
       .then(function aOpenConnection(db) {
-        var col = db.collection(CONFIG.MONGODB.COLLECTION);
+        var col = db.collection(process.env.MONGODB_COLLECTION);
 
         if(!changeText) {
           throw new Error(':crying_cat_face:: "Sorry human, your message was invalid. Human obliteration initiated."');
@@ -77,7 +69,7 @@ exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
       .then(function aAddChangelog(dbRes) {
         var savedChange = dbRes.ops[0];
         var savedChangeText = '@' + savedChange.user_name + ' at ' + utils.formatDate(savedChange.date_created) + ': ' + savedChange.text;
-        SlackCtrl.postToChannel(CONFIG.SLACK.CHANNEL, CONFIG.SLACK.EMOJI, CONFIG.SLACK.BOT_NAME, 'Hello Humans, @' + savedChange.user_name + ' has added the following to the changelog:\r\n\t\t' + savedChangeText + '\r\n _(Type /changelog to see all changes)_');
+        SlackCtrl.postToChannel(process.env.SLACK_CHANNEL, process.env.SLACK_EMOJI, process.env.SLACK_BOT_NAME, 'Hello Humans, @' + savedChange.user_name + ' has added the following to the changelog:\r\n\t\t' + savedChangeText + '\r\n _(Type /changelog to see all changes)_');
 
         resolve(':kissing_cat:: "Hello human, I have added your change to the list!"');
       })
@@ -92,7 +84,7 @@ exports.qRmChangelog = function(userName, hash) {
   return Q.Promise(function(resolve, reject) {
     _qOpenConnection()
       .then(function aOpenConnection(db) {
-        var col = db.collection(CONFIG.MONGODB.COLLECTION);
+        var col = db.collection(process.env.MONGODB_COLLECTION);
 
         if(hash.length !== 6) {
           throw new Error(':crying_cat_face:: 1, 2, 3... wait a second. Human, your hash doesn\'t have 7 characters.');
@@ -103,7 +95,7 @@ exports.qRmChangelog = function(userName, hash) {
           .then(function aRmAndFindChangelog(dbFindRes) {
             if(!dbFindRes) {
               throw new Error(':crying_cat_face:: Human, that item doesn\'t even exist!');
-            } else if(dbFindRes.user_name !== userName && CONFIG.SLACK.ADMIN !== userName) {
+            } else if(dbFindRes.user_name !== userName && process.env.SLACK_ADMIN !== userName) {
               throw new Error(':smirk_cat:: You\'re not the creator, You cannot haz this removed!');
             } else {
               return col.deleteOne({ hash: dbFindRes.hash });
