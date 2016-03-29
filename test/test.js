@@ -1,5 +1,6 @@
 'use strict';
 
+require('dotenv').config()
 
 var rp = require('request-promise');
 var utils = require('../ctrls/utils');
@@ -7,18 +8,13 @@ var util = require('util');
 
 var mongodb = require('../ctrls/mongo_db');
 
-try {
-  var CONFIG = require('../config.json');
-} catch(e) {
-  console.log('config.json is not available, therefore I will use an environment variable.');
-}
 
 var API_SERVER = 'http://localhost:3000/';
 var CHANGE_TEXT = 'Implemented tests for slackchangelog';
 var TODAY = new Date();
 var YESTERDAY = new Date(new Date().setDate(TODAY.getDate() - 1));
 var API_BODY_BOILERPLATE = {
-  token: CONFIG.SLACK.TOKEN,
+  token: process.env.SLACK_TOKEN,
   team_id: 'T0001',
   team_domain: 'example',
   channel_id: 'C2147483705',

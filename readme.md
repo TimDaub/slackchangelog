@@ -4,27 +4,28 @@ A tiny express.js/mongodb application that integrates with slack's [slash-comman
 
 ## Tests
 ```
-npm i -g mocha
-mocha
+$ npm i -g mocha
+$ mocha
 
 // if mocha gives timeouts because your mongodb is to slow,
 // increase timeout threshold for it by setting
-mocha --timeout 5000
+$ mocha --timeout 5000
 ```
 
 ## Run it
 ```
-npm install
-node app
+$ npm install
+$ mongod
+$ node app
 ```
 
 ## Installation
 Make sure you have node.js installed.
 
-1. `git clone git@github.com:TimDaub/slackchangelog.git`
-2. `npm install`
-3. `mv config_example.json config.json`
-4. `node app.js`
+1. `$ git clone git@github.com:TimDaub/slackchangelog.git`
+2. `$ npm install`
+3. `$ mv .env-template .env`
+4. `$ node app.js`
 
 (Right now, we're simply using a mongolabs server. Later simple SaaS integrations (most certainly heroku) will be added)
 
