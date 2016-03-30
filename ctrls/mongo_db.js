@@ -52,22 +52,25 @@ exports.qAddChangelog = function(userName, dateCreated, changeText, body) {
         if(changeText.length > 80) {
           throw new Error(':crying_cat_face:: "Sorry human, Linus told me that messages can not be longer than 80 characters."');
         }
-
-        body = _.extend(_.extend({}, body), {
+ 
+        _.extend(body, {
           date_created: dateCreated,
           text: changeText
+        })
+        var hash = require('crypto')
+                     .createHash('md5')
+                     .update(JSON.stringify(body))
+                     .digest('hex');
+        _.extend(body, {
+          hash: hash
         });
+        col.insertOne(body);
 
-        return col.insertOne(_.extend(body, {
-          hash: require('crypto').createHash('md5').update(JSON.stringify(body)).digest('hex')
-        }));
-      })
-      .then(function aAddChangelog(dbRes) {
-        var savedChange = dbRes.ops[0];
-        var savedChangeText = '@' + savedChange.user_name + ' at ' + utils.formatDate(savedChange.date_created) + ': ' + savedChange.text;
-        SlackCtrl.postToChannel(process.env.SLACK_CHANNEL, process.env.SLACK_EMOJI, process.env.SLACK_BOT_NAME, 'Hello Humans, @' + savedChange.user_name + ' has added the following to the changelog:\r\n\t\t' + savedChangeText + '\r\n _(Type /changelog to see all changes)_');
-
-        resolve(':kissing_cat:: "Hello human, I have added your change to the list!"');
+        resolve({
+          'user_name': userName,
+          'date_created': dateCreated,
+          'text': changeText
+        });
       })
       .catch(function aErrorAddChangelog(err) {
         console.error(err);

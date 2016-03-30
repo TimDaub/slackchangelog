@@ -1,7 +1,9 @@
 'use strict';
 
+var Q = require('q');
 var MongoDB = require('../ctrls/mongo_db');
 
+var SlackCtrl = require('../ctrls/slack_ctrl');
 var utils = require('../utils/utils');
 var transformers = require('../ctrls/transformers');
 
@@ -11,7 +13,6 @@ var _respondWithText = function(req, res, text, type) {
   var input = '@' + userName + ': ' + req.body.command + ' ' + req.body.text + '\r\n';
   type = type || 'ephemeral';
 
-  console.log(text)
   res.json(200, {
     response_type: type,
     text: input + text
@@ -25,7 +26,7 @@ var _genericTextResponse = function(req, res) {
 var _getChangelog = function(req, res, start, end) {
   MongoDB
     .qGetChangelog(start, end)
-    .then(transformers.qTransformToReadableChangelog)
+    .then(transformers.qTransformChangelogList)
     .then(_genericTextResponse(req, res))
     .catch(_genericTextResponse(req, res));
 };
@@ -40,6 +41,18 @@ var _addChangelog = function(req, res) {
 
   MongoDB
     .qAddChangelog(userName, isDateValid ? dateCreated : new Date(), changeText, req.body)
+    .then(transformers.qTransformCreateAction)
+    .then(function(text) {
+      return Q.Promise(function(reject, resolve) {
+        SlackCtrl.postToChannel(
+          process.env.SLACK_CHANNEL,
+          process.env.SLACK_EMOJI,
+          process.env.SLACK_BOT_NAME,
+          text
+        );
+        resolve(':kissing_cat:: "Hello human, I have added your change to the list!"');
+      });
+    })
     .then(_genericTextResponse(req, res))
     .catch(_genericTextResponse(req, res));
 };
