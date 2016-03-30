@@ -2,12 +2,16 @@
 
 var MongoDB = require('../ctrls/mongo_db');
 
+var utils = require('../utils/utils');
+var transformers = require('../ctrls/transformers');
+
 
 var _respondWithText = function(req, res, text, type) {
   var userName = req.body.user_name;
   var input = '@' + userName + ': ' + req.body.command + ' ' + req.body.text + '\r\n';
   type = type || 'ephemeral';
 
+  console.log(text)
   res.json(200, {
     response_type: type,
     text: input + text
@@ -21,6 +25,7 @@ var _genericTextResponse = function(req, res) {
 var _getChangelog = function(req, res, start, end) {
   MongoDB
     .qGetChangelog(start, end)
+    .then(transformers.qTransformToReadableChangelog)
     .then(_genericTextResponse(req, res))
     .catch(_genericTextResponse(req, res));
 };

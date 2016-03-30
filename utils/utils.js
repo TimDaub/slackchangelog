@@ -1,6 +1,5 @@
 'use strict';
 
-
 var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 

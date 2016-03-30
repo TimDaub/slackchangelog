@@ -6,7 +6,7 @@ var Q = require('q');
 var _ = require('lodash');
 
 var SlackCtrl = require('./slack_ctrl');
-var utils = require('../ctrls/utils');
+var utils = require('../utils/utils');
 
 
 var _qOpenConnection = function() {
@@ -26,15 +26,11 @@ exports.qGetChangelog = function(start, end) {
           .find({ date_created: { $gte: start, $lt: end } })
           .sort({ date_created: 1 })
           .toArray(function(err, items) {
-            var date;
-            var texts = items.reduce(function(text, change) {
-              var dateChanged = !date || date.getUTCDate() !== change.date_created.getUTCDate();
-              text += dateChanged ? '\r\n\t\t' + utils.formatDate(change.date_created) + ':\r\n' : '';
-              date = dateChanged ? change.date_created : date;
-              text += '\t\t\t\t #' + change.hash.slice(-6) + ' @' + change.user_name + ': ' + change.text + '\r\n';
-              return text;
-            }, '');
-            resolve(texts || ':crying_cat_face:: "Couldn\'t find a changelog."');
+            if(err) {
+              reject(err);
+            } else {
+              resolve(items);
+            }
           });
       })
       .catch(function aErrorFindChangelog(err) {
